@@ -80,7 +80,6 @@ router.get('/savedPost', isLoggedIn, async function(req, res) {
         model: 'Users'
       }
     })
-    console.log(user.saved)
     res.render('savedPost.ejs', { footer: true, user,});
   } catch (error) {
     console.error(error);
@@ -147,7 +146,6 @@ router.get('/story/:userId',isLoggedIn, async function(req, res) {
   var stories = stories.filter(async function (story){
     if(story.duration[1]==='d'){
       var ans = await storyModel.deleteOne({_id:story._id})
-      console.log(ans)
       var index = storyUser.stories.indexOf(story._id)
       storyUser.stories.splice(index,1)
       storyUser.save();
