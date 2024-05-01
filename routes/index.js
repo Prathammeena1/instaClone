@@ -407,7 +407,6 @@ router.post("/register", (req, res) => {
 router.post('/login', passport.authenticate('local', {
   successRedirect: '/feed',
   failureRedirect: '/login',
-  failureFlash: true // Enable flash messages for login failures
 }));
 
 router.get('/logout', (req, res) => {
