@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 // Define the post schema with validations and indexes
 const postSchema = new mongoose.Schema({
-  caption: { type: String, required: true },
+  caption: { type: String, required: false },
   picture: { type: String, required: true },
   date: { type: Date, default: Date.now },
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Users' }],

@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
 const passportLocalMongoose = require('passport-local-mongoose');
 
-mongoose.connect('mongodb://127.0.0.1:27017/instaClone12');
+mongoose.connect(process.env.DBURL).then(()=>{
+  console.log('db connected')
+})
 
 // Define the user schema with validations and indexes
 const userSchema = new mongoose.Schema({
@@ -20,15 +22,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Apply the passport-local-mongoose plugin for secure password storage and authentication
-userSchema.plugin(passportLocalMongoose, {
-  usernameUnique: true,
-  usernameField: 'username', // Specify the username field for authentication
-  passwordValidator: (password, cb) => {
-    // Implement custom password validation if needed
-    // Example: Check password strength, length, etc.
-    cb();
-  }
-});
+userSchema.plugin(passportLocalMongoose);
 
 // Add indexes for frequent queries
 userSchema.index({ username: 1 }); // Index for efficient querying by username

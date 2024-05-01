@@ -25,18 +25,18 @@ router.get('/login', function(req, res) {
 
 router.get('/feed', isLoggedIn, async function(req, res) {
   try {
-    var user = await userModel.findOne({ username: req.session.passport.user });
+    var user = await userModel.findOne({ username: req.session.passport.user }).populate('followings').populate('followers')
     var posts = await postModel.find().populate('user')
     var stories = await storyModel.find({ user: { $ne: user._id } }).populate('user')
 
     const postcopy = posts
-    .filter(post => post.user._id.toString() === user._id.toString() || user.followings.some(id => id.toString() === post.user._id.toString()))
+    // .filter(post => post.user._id.toString() === user._id.toString() || user.followings.some(id => id.toString() === post.user._id.toString()))
     .map(post => ({ ...post.toObject(), duration: utils.getTimeDifferenceFromNow(new Date(post.date)) }));
 
 
     const obj = {};
     const newStories = stories
-    .filter(story => (story.user._id.toString() === user._id.toString() || user.followings.some(id => id.toString() === story.user._id.toString())))
+    // .filter(story => (story.user._id.toString() === user._id.toString() || user.followings.some(id => id.toString() === story.user._id.toString())))
     .filter(story => {
         if (!obj[story.user._id]) {
             obj[story.user._id] = " ";
@@ -47,7 +47,24 @@ router.get('/feed', isLoggedIn, async function(req, res) {
     });
 
 
-    res.render('feed.ejs', { footer: true, user, posts: postcopy, stories:newStories });
+
+    const combinedArray = user.followings.concat(user.followers);
+    
+    const objectMap = new Map();
+    
+    // Iterate through the array of objects
+    combinedArray.forEach(obj => {
+        // If the ID is not in the map, add the object to the map
+        if (!objectMap.has(obj._id.toString())) {
+            objectMap.set(obj._id.toString(), obj);
+        }
+    });
+    
+    // Convert the map values back to an array
+    const messageUserArray = Array.from(objectMap.values());
+
+
+    res.render('feed.ejs', { footer: true, user, posts: postcopy, stories:newStories,messageUserArray });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
@@ -145,7 +162,7 @@ router.get('/story/:userId',isLoggedIn, async function(req, res) {
     res.redirect('/feed')
   }
   else{
-    res.render('story.ejs', {footer:true,user,storyUser,stories})
+    res.render('story.ejs', {footer:false,user,storyUser,stories})
   }
 }
 });
@@ -289,11 +306,12 @@ router.get('/upload',isLoggedIn, async function(req, res) {
 router.post('/upload',isLoggedIn, upload.single("image") , async function(req, res) {
   var user = await userModel.findOne({username:req.session.passport.user})
   if(req.body.catagory === 'post'){
-    const newPost = await postModel.create({
-      picture:req.file.filename,
-      caption:req.body.caption,
-      user:user._id
-    })
+      const newPost = await postModel.create({
+        picture:req.file.filename,
+        caption:req.body.caption,
+        user:user._id
+      })
+      
     user.posts.push(newPost._id)
   }
   else if(req.body.catagory === 'story'){
