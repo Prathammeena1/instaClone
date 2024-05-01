@@ -382,26 +382,33 @@ router.get('/getMessage/:oppositeUserId',isLoggedIn, async function(req,res,next
   res.json(messages)
 
 })
+// Register route
+router.post("/register", (req, res) => {
+  // Validate user input
+  const { username, name, email, password } = req.body;
+  if (!username || !name || !email || !password) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
 
-router.post("/register",function(req,res){
-  const userData = new userModel({
-    username:req.body.username,
-    name:req.body.name,
-    email:req.body.email,
-  })
-
-  userModel.register(userData,req.body.password)
-  .then(function(){
-    passport.authenticate("local")(req,res,function(){
+  // Create a new user
+  const newUser = new userModel({ username, name, email });
+  userModel.register(newUser, password, (err, user) => {
+    if (err) {
+      console.error('Error registering user:', err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+    passport.authenticate("local")(req, res, () => {
       res.redirect('/profile');
-    })
-  })
-})
+    });
+  });
+});
 
-router.post('/login',passport.authenticate('local',{
-  successRedirect:'/feed',
-  failureRedirect:'/login'
-}),function(req,res){})
+// Login route
+router.post('/login', passport.authenticate('local', {
+  successRedirect: '/feed',
+  failureRedirect: '/login',
+  failureFlash: true // Enable flash messages for login failures
+}));
 
 router.get('/logout', (req, res) => {
   req.logout(function(){
